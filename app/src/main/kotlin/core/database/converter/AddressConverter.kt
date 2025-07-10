@@ -1,12 +1,12 @@
 package com.example.composetree.core.database.converter
 
 import androidx.room.TypeConverter
-import com.example.composetree.core.model.Address
+import com.example.composetree.core.model.EthereumAddress
 
 class AddressConverter {
     @TypeConverter
-    fun fromAddress(address: Address?): ByteArray? = address?.bytes?.toByteArray()
+    fun fromAddress(ethereumAddress: EthereumAddress?): ByteArray? = ethereumAddress?.bytes?.toByteArray()
 
     @TypeConverter
-    fun toAddress(bytes: ByteArray?) = bytes?.let { Address(it) }
+    fun toAddress(bytes: ByteArray?) = bytes?.let { EthereumAddress(it) }
 }

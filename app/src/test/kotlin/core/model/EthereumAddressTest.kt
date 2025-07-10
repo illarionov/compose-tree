@@ -8,18 +8,18 @@ import assertk.tableOf
 import kotlinx.io.bytestring.ByteString
 import org.junit.Test
 
-class AddressTest {
+class EthereumAddressTest {
     @Test
     fun address_constructor_success_case() {
         val validAddress = ByteString(ByteArray(20, Int::toByte))
-        val address = Address(validAddress)
-        assertThat(address.bytes).isEqualTo(validAddress)
+        val ethereumAddress = EthereumAddress(validAddress)
+        assertThat(ethereumAddress.bytes).isEqualTo(validAddress)
     }
 
     @Test
     fun address_should_throw_on_invalid_address() {
         val malformedAddress = ByteArray(1, Int::toByte)
-        assertFailure { Address(malformedAddress) }.hasClass(IllegalArgumentException::class)
+        assertFailure { EthereumAddress(malformedAddress) }.hasClass(IllegalArgumentException::class)
     }
 
     @Test
@@ -29,7 +29,7 @@ class AddressTest {
             .row(ByteArray(20) { 0.toByte() }, "0x0000000000000000000000000000000000000000")
             .row(ByteArray(20) { if (it > 16) it.toByte() else 0 }, "0x0000000000000000000000000000000000111213")
             .forAll { bytes, expectedResult ->
-                val address = Address(bytes)
+                val address = EthereumAddress(bytes)
                 assertThat(address.toEthereumString()).isEqualTo(expectedResult)
             }
     }
@@ -45,7 +45,7 @@ class AddressTest {
             .row("0x0000000000000000000000000000000000000000", ByteArray(20) { 0.toByte() })
             .row("0x0000000000000000000000000000000000111213", ByteArray(20) { if (it > 16) it.toByte() else 0 })
             .forAll { etherumAddress, expectedAddressBytes ->
-                assertThat(etherumAddress.toAddress()).isEqualTo(Address(expectedAddressBytes))
+                assertThat(etherumAddress.toEthereumAddress()).isEqualTo(EthereumAddress(expectedAddressBytes))
             }
     }
 
@@ -59,7 +59,7 @@ class AddressTest {
             .row("h00102030405060708090a0b0c0d0e0f10111213")
             .row("x00102030405060708090a0b0c0d0e0f10111213")
             .forAll { malformedAddress ->
-                assertFailure { malformedAddress.toAddress() }.hasClass(IllegalArgumentException::class)
+                assertFailure { malformedAddress.toEthereumAddress() }.hasClass(IllegalArgumentException::class)
             }
     }
 

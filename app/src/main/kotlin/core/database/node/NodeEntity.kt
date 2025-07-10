@@ -4,9 +4,8 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
-import com.example.composetree.core.model.Address
+import com.example.composetree.core.model.EthereumAddress
 
-// TODO: parent
 @Entity(
     tableName = "node",
     foreignKeys = [
@@ -20,7 +19,7 @@ import com.example.composetree.core.model.Address
     ]
 )
 data class NodeEntity(
-    @PrimaryKey val name: Address,
-    @ColumnInfo(index = true) val parent: Address? = null,
-    @ColumnInfo(name = "created_at", defaultValue = "CURRENT_TIMESTAMP") val createdAt: Long, // TODO
+    @PrimaryKey val name: EthereumAddress,
+    @ColumnInfo(index = true) val parent: EthereumAddress? = null,
+    @ColumnInfo(name = "created_at", defaultValue = "CURRENT_TIMESTAMP") val createdAt: Long,
 )

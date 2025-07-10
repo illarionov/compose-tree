@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">Compose Tree</string>
+    <string name="navigate_up">Navigate up</string>
+    <string name="add_node">Add node</string>
+    <string name="root_node_app_bar_title">Root</string>
+    <string name="node_title">Node</string>
+    <string name="child_nodes">Child nodes</string>
+    <string name="child_node_list_is_empty">No child nodes</string>
+    <string name="failed_to_load_child_nodes">Failed to load child nodes</string>
+    <string name="initial_load_failed">Initial load failed</string>
+    <string name="failed_to_insert_node">Failed to insert node to %1$s parent</string>
+    <string name="remove_node">Remove node</string>
+    <string name="failed_to_delete_node">Failed to delete node</string>
+    <string name="node_removed">Node %1$s removed</string>
 </resources>

@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
+    id("kotlin-parcelize")
 }
 
 android {
@@ -41,6 +42,10 @@ android {
     }
 }
 
+kotlin.compilerOptions {
+    optIn.add("kotlin.time.ExperimentalTime")
+}
+
 room {
     schemaDirectory("$projectDir/schemas")
 }
@@ -57,6 +62,11 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.room.ktx)
     implementation(libs.kotlinx.io.bytestring)
+    implementation(libs.mvikotlin.coroutines)
+    implementation(libs.mvikotlin.logging)
+    implementation(libs.mvikotlin)
+    implementation(libs.mvikotlin.main)
+    implementation(libs.mvikotlin.timetravel)
     implementation(libs.sqlite.bundled)
     testImplementation(libs.assertk)
     testImplementation(libs.junit)
