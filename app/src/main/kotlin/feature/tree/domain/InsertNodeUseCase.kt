@@ -7,6 +7,7 @@ import com.example.composetree.core.model.ROOT_NODE_NAME
 import com.example.composetree.feature.tree.domain.InsertNodeUseCase.NodeNameProvider
 import com.example.composetree.feature.tree.domain.NodeRespository.NodeRepositoryException
 import kotlinx.io.bytestring.buildByteString
+import javax.inject.Inject
 import kotlin.random.Random
 
 public fun interface InsertNodeUseCase {
@@ -17,7 +18,7 @@ public fun interface InsertNodeUseCase {
     }
 }
 
-public class InsertNodeUseCaseImpl(
+public class InsertNodeUseCaseImpl @Inject constructor(
     private val nodeRespository: NodeRespository,
     private val nodeNameProvider: NodeNameProvider = HashBasedNameProvider(),
 ) : InsertNodeUseCase {
@@ -34,7 +35,7 @@ public class InsertNodeUseCaseImpl(
 }
 
 public class HashBasedNameProvider(
-    private val fallbackProvider: RandomNameProvider = RandomNameProvider()
+    private val fallbackProvider: NodeNameProvider = RandomNameProvider()
 ) : NodeNameProvider {
     override suspend fun getName(parent: EthereumAddress): EthereumAddress {
         // Пытаемся как-нибудь применить хэш узла для формирования адреса, задание неразборчиво

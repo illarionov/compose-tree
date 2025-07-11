@@ -10,17 +10,20 @@ import com.example.composetree.core.model.ROOT_NODE_NAME
 import com.example.composetree.feature.tree.domain.NodeRespository
 import com.example.composetree.feature.tree.domain.NodeRespository.NodeRepositoryException
 import com.example.composetree.feature.tree.domain.NodeRespository.RecordExistsException
+import com.example.composetree.wiring.DispatcherModule.ComputationDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Clock
 
-public class NodeRepositoryImpl(
+class NodeRepositoryImpl @Inject constructor(
     private val nodeDao: NodeDao,
+    @param:ComputationDispatcher
     private val computationDispatcherContext: CoroutineContext = Dispatchers.Main,
     private val clock: Clock = Clock.System,
 ) : NodeRespository {

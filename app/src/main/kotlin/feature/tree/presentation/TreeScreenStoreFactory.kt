@@ -34,12 +34,15 @@ import com.example.composetree.feature.tree.presentation.TreeScreenStore.TreeScr
 import com.example.composetree.feature.tree.presentation.TreeScreenStoreFactory.Action.InsertNode
 import com.example.composetree.feature.tree.presentation.TreeScreenStoreFactory.Msg.LoadNodeFailed
 import com.example.composetree.feature.tree.presentation.TreeScreenStoreFactory.Msg.NodeContentUpdated
+import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-internal class TreeScreenStoreFactory(
+@ViewModelScoped
+internal class TreeScreenStoreFactory @Inject constructor(
     private val storeFactory: StoreFactory,
     private val loadNodeUseCase: LoadNodeUseCase,
     private val insertNodeUseCase: InsertNodeUseCase,
@@ -54,7 +57,14 @@ internal class TreeScreenStoreFactory(
             initialState = InitialLoad(nodeName),
             bootstrapper = SimpleBootstrapper(Action.Init(nodeName)),
             reducer = ReducerImpl,
-            executorFactory = { ExecutorImpl(loadNodeUseCase, insertNodeUseCase, deleteNodeUseCase, nodeNameProvider) },
+            executorFactory = {
+                ExecutorImpl(
+                    loadNodeUseCase,
+                    insertNodeUseCase,
+                    deleteNodeUseCase,
+                    nodeNameProvider
+                )
+            }
         ) {
     }
 
@@ -203,7 +213,8 @@ internal class TreeScreenStoreFactory(
                             if (name == node?.name) {
                                 navigateToNode(node.name)
                             }
-                            val statusMessage = SnackbarMessage(R.string.snackbar_msg_node_removed, listOf(name))
+                            val statusMessage =
+                                SnackbarMessage(R.string.snackbar_msg_node_removed, listOf(name))
                             publish(statusMessage)
                         },
                         onFailure = { exception: Throwable ->

@@ -2,8 +2,6 @@ package com.example.composetree.core.model
 
 import android.os.Parcel
 import android.os.Parcelable
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
 import kotlinx.io.bytestring.ByteString
 import kotlinx.io.bytestring.hexToByteString
 import kotlinx.io.bytestring.toHexString

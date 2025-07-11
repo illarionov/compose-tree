@@ -4,6 +4,7 @@ import com.example.composetree.core.model.EthereumAddress
 import com.example.composetree.core.model.ROOT_NODE_NAME
 import com.example.composetree.feature.tree.domain.DeleteNodeUseCase.DeleteNodeException
 import com.example.composetree.feature.tree.domain.NodeRespository.NodeRepositoryException
+import javax.inject.Inject
 
 public fun interface DeleteNodeUseCase {
     suspend fun delete(name: EthereumAddress): Result<Unit>
@@ -16,7 +17,7 @@ public fun interface DeleteNodeUseCase {
     }
 }
 
-public class DeleteNodeUseCaseImpl(
+public class DeleteNodeUseCaseImpl @Inject constructor(
     private val nodeRespository: NodeRespository,
 ) : DeleteNodeUseCase {
     override suspend fun delete(name: EthereumAddress): Result<Unit> {

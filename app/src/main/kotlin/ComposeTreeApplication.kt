@@ -1,10 +1,7 @@
 package com.example.composetree
 
 import android.app.Application
+import dagger.hilt.android.HiltAndroidApp
 
-class ComposeTreeApplication : Application() {
-    override fun onCreate() {
-        super.onCreate()
-        ApplicationComponent.initApplicationComponent(this)
-    }
-}
+@HiltAndroidApp
+class ComposeTreeApplication : Application()

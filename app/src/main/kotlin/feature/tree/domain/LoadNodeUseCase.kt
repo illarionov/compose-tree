@@ -6,6 +6,7 @@ import com.example.composetree.feature.tree.domain.LoadNodeUseCase.LoadNodeFaile
 import com.example.composetree.feature.tree.domain.LoadNodeUseCase.NodeWithChildFlow
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 import kotlin.coroutines.coroutineContext
 
 public fun interface LoadNodeUseCase {
@@ -22,7 +23,7 @@ public fun interface LoadNodeUseCase {
     ) : RuntimeException(message, cause)
 }
 
-public class LoadNodeUseCaseImpl(
+public class LoadNodeUseCaseImpl @Inject constructor(
     private val nodeRepository: NodeRespository,
 ) : LoadNodeUseCase {
     override suspend fun load(name: EthereumAddress): Result<NodeWithChildFlow>  {

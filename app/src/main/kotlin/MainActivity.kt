@@ -13,10 +13,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.composetree.core.ui.theme.ComposeTreeTheme
 import com.example.composetree.feature.tree.presentation.NodeTreeRoot
 import com.example.composetree.feature.tree.presentation.NodeTreeViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val treeViewModel: NodeTreeViewModel by viewModels { NodeTreeViewModel.Factory }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -25,6 +25,9 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.isNavigationBarContrastEnforced = false
         }
+
+        val treeViewModel: NodeTreeViewModel by viewModels()
+
         setContent {
             ComposeTreeTheme {
                 val state by treeViewModel.screenState.collectAsStateWithLifecycle()

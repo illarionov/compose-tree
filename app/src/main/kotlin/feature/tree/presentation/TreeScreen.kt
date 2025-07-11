@@ -1,5 +1,6 @@
 @file:OptIn(
-    ExperimentalMaterial3ExpressiveApi::class, ExperimentalSharedTransitionApi::class,
+    ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalSharedTransitionApi::class,
     ExperimentalMaterial3Api::class,
 )
 
