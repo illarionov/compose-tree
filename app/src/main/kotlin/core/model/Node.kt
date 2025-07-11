@@ -3,10 +3,10 @@ package com.example.composetree.core.model
 /**
  * Адрес ROOT-ноды: 0
  */
-public val ROOT_NODE_NAME = EthereumAddress(ByteArray(20))
+public val ROOT_NODE_NAME = EthereumAddress(ByteArray(ADDRESS_SIZE_BYTES))
 
 /**
- * Адрес
+ * Корневая нода
  */
 public val ROOT_NODE = Node(ROOT_NODE_NAME, ROOT_NODE_NAME)
 

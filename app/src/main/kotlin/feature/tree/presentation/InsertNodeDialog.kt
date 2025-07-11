@@ -43,7 +43,6 @@ internal fun InsertNodeDialog(
     onIntent: (Intent) -> Unit,
 ) {
     val sendDismissEvent = { onIntent(Intent.DismissInsertNodeDialog) }
-
     val isNameInputValid: Boolean by remember {
         derivedStateOf {
             EthereumAddressValidator.isValidEthereumAddress(state.textFieldState.text.toString())
@@ -73,7 +72,7 @@ internal fun InsertNodeDialog(
                         .align(Alignment.CenterHorizontally),
                 )
                 Text(
-                    text = "Parent:",
+                    text = stringResource(R.string.insert_node_dialog_label_parent_node),
                     style = MaterialTheme.typography.titleSmall,
                 )
                 Text(

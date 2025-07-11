@@ -74,10 +74,10 @@ internal class NodeTreeViewModel(
         val Factory: Factory = viewModelFactory {
             initializer {
                 val savedStateHandle = createSavedStateHandle()
-                val nodeRespository = applicationComponent.nodeRepository
-                val loadNodeUseCase = LoadNodeUseCaseImpl(nodeRespository)
-                val insertNodeUseCase = InsertNodeUseCaseImpl(nodeRespository)
-                val deleteNodeUseCase = DeleteNodeUseCaseImpl(nodeRespository)
+                val nodeRepository = applicationComponent.nodeRepository
+                val loadNodeUseCase = LoadNodeUseCaseImpl(nodeRepository)
+                val insertNodeUseCase = InsertNodeUseCaseImpl(nodeRepository)
+                val deleteNodeUseCase = DeleteNodeUseCaseImpl(nodeRepository)
                 val nodeNameProvider = HashBasedNameProvider()
                 NodeTreeViewModel(
                     storeFactoryInstance = applicationComponent.globalStoreFactoryInstance,

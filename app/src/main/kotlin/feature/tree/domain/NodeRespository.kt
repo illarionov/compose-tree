@@ -13,10 +13,15 @@ public interface NodeRespository {
 
     suspend fun deleteNodeRecursively(name: EthereumAddress)
 
-    public class NodeRepositoryException : RuntimeException {
+    public open class NodeRepositoryException : RuntimeException {
         constructor() : super()
         constructor(message: String?) : super(message)
         constructor(message: String?, cause: Throwable?) : super(message, cause)
         constructor(cause: Throwable?) : super(cause)
     }
+
+    public class RecordExistsException(
+        message: String?,
+        cause: Throwable? = null,
+    ) : NodeRepositoryException(message, cause)
 }

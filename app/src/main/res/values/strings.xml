@@ -9,6 +9,7 @@
     <string name="failed_to_load_child_nodes">Failed to load child nodes</string>
     <string name="snackbar_msg_initial_load_failed">Initial load failed</string>
     <string name="snackbar_msg_failed_to_insert_node">Failed to insert node to %1$s parent</string>
+    <string name="snackbar_msg_node_exists">Node %1$s exists</string>
     <string name="remove_node">Remove node</string>
     <string name="snackbar_msg_failed_to_delete_node">Failed to delete node</string>
     <string name="snackbar_msg_node_removed">Node %1$s removed</string>
@@ -19,4 +20,5 @@
     <string name="insert_node_dialog_button_confirm">Create</string>
     <string name="insert_node_dialog_label_node_name">Node name</string>
     <string name="input_is_not_valid_ethereum_address">Not a Ethereum address</string>
+    <string name="insert_node_dialog_label_parent_node">Parent:</string>
 </resources>

@@ -16,6 +16,7 @@ import com.example.composetree.feature.tree.domain.InsertNodeUseCase
 import com.example.composetree.feature.tree.domain.InsertNodeUseCase.NodeNameProvider
 import com.example.composetree.feature.tree.domain.LoadNodeUseCase
 import com.example.composetree.feature.tree.domain.LoadNodeUseCase.NodeWithChildFlow
+import com.example.composetree.feature.tree.domain.NodeRespository.RecordExistsException
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.Intent
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.Intent.ConfirmInsertNode
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.Intent.DeleteNode
@@ -176,11 +177,18 @@ internal class TreeScreenStoreFactory(
                 insertNodeUseCase
                     .insert(parent, name)
                     .onSuccess { newNode -> publish(ScrollToNewNode(newNode.name)) }
-                    .onFailure { _: Throwable ->
-                        val errorMessage = SnackbarMessage(
-                            R.string.snackbar_msg_failed_to_insert_node,
-                            listOf(parent.toEthereumString()),
-                        )
+                    .onFailure { ex: Throwable ->
+                        val errorMessage = when {
+                            ex is RecordExistsException -> SnackbarMessage(
+                                R.string.snackbar_msg_node_exists,
+                                listOf(parent.toEthereumString()),
+                            )
+
+                            else -> SnackbarMessage(
+                                R.string.snackbar_msg_failed_to_insert_node,
+                                listOf(parent.toEthereumString()),
+                            )
+                        }
                         publish(errorMessage)
                     }
             }

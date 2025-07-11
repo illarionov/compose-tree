@@ -1,5 +1,6 @@
 package com.example.composetree.feature.tree.data
 
+import android.database.SQLException
 import com.example.composetree.core.database.node.NodeDao
 import com.example.composetree.core.database.node.NodeEntity
 import com.example.composetree.core.model.EthereumAddress
@@ -8,6 +9,7 @@ import com.example.composetree.core.model.ROOT_NODE
 import com.example.composetree.core.model.ROOT_NODE_NAME
 import com.example.composetree.feature.tree.domain.NodeRespository
 import com.example.composetree.feature.tree.domain.NodeRespository.NodeRepositoryException
+import com.example.composetree.feature.tree.domain.NodeRespository.RecordExistsException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -40,9 +42,19 @@ public class NodeRepositoryImpl(
     }
 
     override suspend fun insertNode(node: Node) {
+        if (node.name == ROOT_NODE_NAME) {
+            // Root всегда существует, в базе для ссылки на него используется parent=null.
+            throw RecordExistsException("Root node always exists")
+        }
         val nodeEntity = node.toNodeEntity(clock)
         return try {
             nodeDao.insertNode(nodeEntity)
+        } catch (sqlex: SQLException) {
+            if (sqlex.isUniqueConstraintFailed()) {
+                throw RecordExistsException("Node with name ${node.name} already exists", sqlex)
+            } else {
+                throw NodeRepositoryException("SQL error", sqlex)
+            }
         } catch (ex: RuntimeException) {
             coroutineContext.ensureActive()
             throw NodeRepositoryException(ex)

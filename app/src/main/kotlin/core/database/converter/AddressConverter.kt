@@ -8,5 +8,5 @@ class AddressConverter {
     fun fromAddress(ethereumAddress: EthereumAddress?): ByteArray? = ethereumAddress?.bytes?.toByteArray()
 
     @TypeConverter
-    fun toAddress(bytes: ByteArray?) = bytes?.let { EthereumAddress(it) }
+    fun toAddress(bytes: ByteArray?) = bytes?.let(::EthereumAddress)
 }
