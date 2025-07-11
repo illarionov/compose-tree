@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     tags:
-      - *
+      - '*'
   workflow_dispatch:
 
 env:
@@ -17,6 +17,7 @@ env:
 
 permissions:
   checks: write
+  contents: write
   pull-requests: write
   security-events: write
 
