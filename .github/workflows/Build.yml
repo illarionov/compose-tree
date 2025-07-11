@@ -1,0 +1,75 @@
+name: build
+
+on:
+  pull_request:
+  push:
+    tags:
+      - *
+  workflow_dispatch:
+
+env:
+  CI: true
+  TERM: dumb
+  GRADLE_OPTS: >-
+    -Dorg.gradle.jvmargs="-Xmx3G -XX:MaxMetaspaceSize=1g -XX:SoftRefLRUPolicyMSPerMB=10 -XX:+UseParallelGC -XX:NewRatio=1"
+  KOTLIN_DAEMON_JVMARGS: >-
+    -Xmx2G -XX:MaxMetaspaceSize=320M -XX:SoftRefLRUPolicyMSPerMB=10 -XX:+UseParallelGC -XX:NewRatio=1
+
+permissions:
+  checks: write
+  pull-requests: write
+  security-events: write
+
+jobs:
+  assemble:
+    name: Assemble
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '24'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-encryption-key: ${{ secrets.GradleEncryptionKey }}
+          dependency-graph: generate
+
+      - name: Assemble debug build, run tests
+        run: >
+          ./gradlew --scan -Pkotlin.daemon.jvmargs="${{ env.KOTLIN_DAEMON_JVMARGS }}"
+          build --stacktrace
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-outputs
+          path: '**/build/outputs'
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action/macos@v2
+        if: ${{ !cancelled() && (github.actor != 'dependabot[bot]') }}
+        with:
+          comment_mode: off
+          junit_files: '**/build/test-results/**/*.xml'
+          check_name: "Test results"
+
+      - name: Create release on Github
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/mapping/release/
+          draft: true
+          prerelease: true

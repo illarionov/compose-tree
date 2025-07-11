@@ -22,10 +22,20 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("testkey") {
+            keyAlias = providers.environmentVariable("SIGN_KEY_ALIAS").getOrElse("release")
+            keyPassword = providers.environmentVariable("SIGN_KEY_PASSWORD").getOrElse("testkey")
+            storeFile = providers.environmentVariable("SIGN_STORE").orNull?.let(::File)
+                ?: rootProject.file("test_keystore.jks")
+            storePassword = providers.environmentVariable("SIGN_STORE_PASSWORD").getOrElse("testkey")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("testkey")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
