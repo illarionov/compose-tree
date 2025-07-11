@@ -2,6 +2,8 @@ package com.example.composetree.feature.tree.presentation
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import com.arkivanov.mvikotlin.core.store.Store
 import com.example.composetree.core.model.EthereumAddress
 import com.example.composetree.core.model.Node
@@ -11,6 +13,7 @@ import com.example.composetree.feature.tree.presentation.TreeScreenStore.Label
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.TreeScreenState
 
 internal interface TreeScreenStore : Store<Intent, TreeScreenState, Label> {
+    @Stable
     sealed interface TreeScreenState {
         val nodeName: EthereumAddress
 
@@ -29,6 +32,7 @@ internal interface TreeScreenStore : Store<Intent, TreeScreenState, Label> {
         )
     }
 
+    @Immutable
     sealed class Intent  {
         data class NavigateToNode(val name: EthereumAddress) : Intent()
         data object NavigateToRoot: Intent()
@@ -39,11 +43,13 @@ internal interface TreeScreenStore : Store<Intent, TreeScreenState, Label> {
         data class DeleteNode(val name: EthereumAddress) : Intent()
     }
 
+    @Immutable
     sealed interface Label {
         data class RootNodeChanged(val name: EthereumAddress) : Label
         data class ScrollToNewNode(val name: EthereumAddress) : Label
     }
 
+    @Immutable
     data class SnackbarMessage(
         @param:StringRes val resourceId: Int,
         val args: List<Any> = emptyList(),
