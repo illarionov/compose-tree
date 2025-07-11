@@ -3,7 +3,6 @@ package com.example.composetree.core.database.node
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.Transaction
 import com.example.composetree.core.model.EthereumAddress
 import kotlinx.coroutines.flow.Flow
 

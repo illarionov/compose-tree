@@ -11,7 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.composetree.core.ui.theme.ComposeTreeTheme
-import com.example.composetree.feature.tree.presentation.NodeTreeScaffold
+import com.example.composetree.feature.tree.presentation.NodeTreeRoot
 import com.example.composetree.feature.tree.presentation.NodeTreeViewModel
 
 class MainActivity : ComponentActivity() {
@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
             ComposeTreeTheme {
                 val state by treeViewModel.screenState.collectAsStateWithLifecycle()
 
-                NodeTreeScaffold(
+                NodeTreeRoot(
                     modifier = Modifier.fillMaxSize(),
                     state = state,
                     labels = treeViewModel.labels,

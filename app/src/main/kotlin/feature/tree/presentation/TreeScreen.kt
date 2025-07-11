@@ -1,10 +1,23 @@
+@file:OptIn(
+    ExperimentalMaterial3ExpressiveApi::class, ExperimentalSharedTransitionApi::class,
+    ExperimentalMaterial3Api::class,
+)
+
 package com.example.composetree.feature.tree.presentation
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.Absolute.spacedBy
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -27,11 +40,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -74,9 +89,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterIsInstance
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun NodeTreeScaffold(
+internal fun NodeTreeRoot(
     state: TreeScreenState,
     labels: Flow<Label>,
     onIntent: (Intent) -> Unit,
@@ -96,7 +110,54 @@ internal fun NodeTreeScaffold(
         onIntent(Intent.NavigateBack)
     }
 
+    SharedTransitionLayout(
+        modifier = modifier,
+    ) {
+        AnimatedContent(
+            targetState = state,
+            label = "basic_transition",
+            contentKey = { state -> state.nodeName },
+            transitionSpec = {
+                fadeIn(
+                    animationSpec = MotionScheme.expressive().slowEffectsSpec(),
+                ).togetherWith(
+                    fadeOut(
+                        animationSpec = MotionScheme.expressive().slowEffectsSpec(),
+                    ),
+                ).using(
+                    SizeTransform(
+                        clip = false,
+                        sizeAnimationSpec = { initialSize, targetSize ->
+                            MotionScheme.expressive().slowSpatialSpec()
+                        },
+                    ),
+                )
+            },
+        ) { state ->
+            NodeTreeScaffold(
+                state = state,
+                snackbarHostState = snackbarHostState,
+                labels = labels,
+                onIntent = onIntent,
+                animatedVisibilityScope = this@AnimatedContent,
+                sharedTransitionScope = this@SharedTransitionLayout,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun NodeTreeScaffold(
+    state: TreeScreenState,
+    snackbarHostState: SnackbarHostState,
+    labels: Flow<Label>,
+    onIntent: (Intent) -> Unit,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope,
+    modifier: Modifier = Modifier,
+) {
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 title = {
@@ -128,7 +189,6 @@ internal fun NodeTreeScaffold(
                 )
             }
         },
-        modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding: PaddingValues ->
         when (state) {
@@ -140,6 +200,8 @@ internal fun NodeTreeScaffold(
                 state = state,
                 onIntent = onIntent,
                 labels = labels,
+                animatedVisibilityScope = animatedVisibilityScope,
+                sharedTransitionScope = sharedTransitionScope,
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -147,34 +209,29 @@ internal fun NodeTreeScaffold(
 }
 
 @Composable
-private fun horizontalInsets(): WindowInsets = WindowInsets.systemGestures
-    .only(WindowInsetsSides.Horizontal)
-    .union(WindowInsets(left = 16.dp, right = 16.dp))
-
-
-@Composable
 internal fun NodeTreeMainContent(
     state: TreeScreenState.MainContent,
     labels: Flow<Label>,
     onIntent: (Intent) -> Unit,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-    ) {
-        NodeTreeNodesContent(
-            node = state.node,
-            child = state.child,
-            labels = labels,
+    NodeTreeNodesContent(
+        modifier = modifier,
+        node = state.node,
+        child = state.child,
+        labels = labels,
+        onIntent = onIntent,
+        animatedVisibilityScope = animatedVisibilityScope,
+        sharedTransitionScope = sharedTransitionScope,
+    )
+    if (state.insertNodeDialogState != null) {
+        InsertNodeDialog(
+            parentNodeName = state.nodeName,
+            state = state.insertNodeDialogState,
             onIntent = onIntent,
         )
-        if (state.insertNodeDialogState != null) {
-            InsertNodeDialog(
-                parentNodeName = state.nodeName,
-                state = state.insertNodeDialogState,
-                onIntent = onIntent,
-            )
-        }
     }
 }
 
@@ -184,8 +241,10 @@ internal fun NodeTreeNodesContent(
     child: List<EthereumAddress>,
     labels: Flow<Label>,
     onIntent: (Intent) -> Unit,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope,
     modifier: Modifier = Modifier,
-) {
+) = with(sharedTransitionScope) {
     Column(
         modifier = modifier.fillMaxWidth(),
     ) {
@@ -195,12 +254,22 @@ internal fun NodeTreeNodesContent(
             Text(
                 text = stringResource(R.string.node_title),
                 style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.sharedElement(
+                    rememberSharedContentState(key = R.string.node_title),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                ),
             )
             SelectionContainer {
                 Text(
                     text = node.name.toEthereumString(),
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier
+                        .sharedBounds(
+                            rememberSharedContentState(key = node.name),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            zIndexInOverlay = 10f,
+                        )
+                        .padding(top = 8.dp),
                 )
             }
             Text(
@@ -224,6 +293,8 @@ internal fun NodeTreeNodesContent(
                 nodes = child,
                 scrollLabels = labels.filterIsInstance<ScrollToNewNode>(),
                 onIntent = onIntent,
+                animatedVisibilityScope = animatedVisibilityScope,
+                sharedTransitionScope = sharedTransitionScope,
             )
         }
     }
@@ -234,6 +305,8 @@ private fun ChildNodes(
     nodes: List<EthereumAddress>,
     scrollLabels: Flow<ScrollToNewNode>,
     onIntent: (Intent) -> Unit,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
@@ -267,7 +340,11 @@ private fun ChildNodes(
                 enabled = enabled,
                 onClick = { onIntent(NavigateToNode(it)) },
                 onRemove = { onIntent(DeleteNode(it)) },
-                modifier = Modifier.fillMaxWidth(),
+                animatedVisibilityScope = animatedVisibilityScope,
+                sharedTransitionScope = sharedTransitionScope,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateItem(),
             )
         }
     }
@@ -279,6 +356,8 @@ fun ChildNodeListItem(
     enabled: Boolean,
     onClick: (EthereumAddress) -> Unit,
     onRemove: (EthereumAddress) -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
 ) {
     val swipeToDismissBoxState = rememberSwipeToDismissBoxState()
@@ -320,22 +399,35 @@ fun ChildNodeListItem(
         ) {
             ListItem(
                 headlineContent = {
-                    Text(
-                        name.toEthereumString(),
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Start,
-                    )
+                    with(sharedTransitionScope) {
+                        Text(
+                            name.toEthereumString(),
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Start,
+                            modifier = Modifier.sharedBounds(
+                                rememberSharedContentState(key = name),
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                zIndexInOverlay = 10f,
+                            ),
+                        )
+                    }
                 },
             )
         }
     }
 }
 
+@Composable
+private fun horizontalInsets(): WindowInsets = WindowInsets.systemGestures
+    .only(WindowInsetsSides.Horizontal)
+    .union(WindowInsets(left = 16.dp, right = 16.dp))
+
+
 @Preview(showBackground = true)
 @Composable
 fun NodeTreeScreenPreviewMainContent() {
     ComposeTreeTheme {
-        NodeTreeScaffold(
+        NodeTreeRoot(
             state = MainContent(
                 node = ROOT_NODE,
                 child = listOf(
@@ -353,7 +445,7 @@ fun NodeTreeScreenPreviewMainContent() {
 @Composable
 fun NodeTreeScreenPreviewPlaceholder() {
     ComposeTreeTheme {
-        NodeTreeScaffold(
+        NodeTreeRoot(
             state = TreeScreenState.InitialLoad(
                 nodeName = "0x000102030405060708090a0b0c0d0e0f10111213".toEthereumAddress(),
             ),
