@@ -14,7 +14,9 @@ import com.example.composetree.applicationComponent
 import com.example.composetree.core.model.ROOT_NODE_NAME
 import com.example.composetree.feature.tree.domain.DeleteNodeUseCase
 import com.example.composetree.feature.tree.domain.DeleteNodeUseCaseImpl
+import com.example.composetree.feature.tree.domain.HashBasedNameProvider
 import com.example.composetree.feature.tree.domain.InsertNodeUseCase
+import com.example.composetree.feature.tree.domain.InsertNodeUseCase.NodeNameProvider
 import com.example.composetree.feature.tree.domain.InsertNodeUseCaseImpl
 import com.example.composetree.feature.tree.domain.LoadNodeUseCase
 import com.example.composetree.feature.tree.domain.LoadNodeUseCaseImpl
@@ -34,6 +36,7 @@ internal class NodeTreeViewModel(
     private val loadNodeUseCase: LoadNodeUseCase,
     private val insertNodeUseCase: InsertNodeUseCase,
     private val deleteNodeUseCase: DeleteNodeUseCase,
+    private val nodeNameProvider: NodeNameProvider,
     private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val store: TreeScreenStore = run {
@@ -42,6 +45,7 @@ internal class NodeTreeViewModel(
             loadNodeUseCase = loadNodeUseCase,
             insertNodeUseCase = insertNodeUseCase,
             deleteNodeUseCase = deleteNodeUseCase,
+            nodeNameProvider = nodeNameProvider,
         ).create(
             nodeName = savedStateHandle[CURRENT_NODE_KEY] ?: ROOT_NODE_NAME,
         )
@@ -74,12 +78,14 @@ internal class NodeTreeViewModel(
                 val loadNodeUseCase = LoadNodeUseCaseImpl(nodeRespository)
                 val insertNodeUseCase = InsertNodeUseCaseImpl(nodeRespository)
                 val deleteNodeUseCase = DeleteNodeUseCaseImpl(nodeRespository)
+                val nodeNameProvider = HashBasedNameProvider()
                 NodeTreeViewModel(
                     storeFactoryInstance = applicationComponent.globalStoreFactoryInstance,
                     savedStateHandle = savedStateHandle,
                     loadNodeUseCase = loadNodeUseCase,
                     insertNodeUseCase = insertNodeUseCase,
                     deleteNodeUseCase = deleteNodeUseCase,
+                    nodeNameProvider = nodeNameProvider,
                 )
             }
         }

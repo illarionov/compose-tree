@@ -1,5 +1,6 @@
 package com.example.composetree.feature.tree.presentation
 
+import androidx.compose.foundation.text.input.TextFieldState
 import com.arkivanov.mvikotlin.core.store.Reducer
 import com.arkivanov.mvikotlin.core.store.SimpleBootstrapper
 import com.arkivanov.mvikotlin.core.store.Store
@@ -9,22 +10,27 @@ import com.example.composetree.R
 import com.example.composetree.core.model.EthereumAddress
 import com.example.composetree.core.model.Node
 import com.example.composetree.core.model.ROOT_NODE_NAME
+import com.example.composetree.core.model.toEthereumAddress
 import com.example.composetree.feature.tree.domain.DeleteNodeUseCase
 import com.example.composetree.feature.tree.domain.InsertNodeUseCase
+import com.example.composetree.feature.tree.domain.InsertNodeUseCase.NodeNameProvider
 import com.example.composetree.feature.tree.domain.LoadNodeUseCase
 import com.example.composetree.feature.tree.domain.LoadNodeUseCase.NodeWithChildFlow
-import com.example.composetree.feature.tree.presentation.TreeScreenStore.SnackbarMessage
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.Intent
+import com.example.composetree.feature.tree.presentation.TreeScreenStore.Intent.ConfirmInsertNode
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.Intent.DeleteNode
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.Intent.NavigateBack
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.Intent.NavigateToNode
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.Intent.NavigateToRoot
-import com.example.composetree.feature.tree.presentation.TreeScreenStore.Intent.ShowAddNodeDialog
+import com.example.composetree.feature.tree.presentation.TreeScreenStore.Intent.ShowInsertNodeDialog
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.Label
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.Label.ScrollToNewNode
+import com.example.composetree.feature.tree.presentation.TreeScreenStore.SnackbarMessage
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.TreeScreenState
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.TreeScreenState.InitialLoad
+import com.example.composetree.feature.tree.presentation.TreeScreenStore.TreeScreenState.InsertNodeDialogState
 import com.example.composetree.feature.tree.presentation.TreeScreenStore.TreeScreenState.MainContent
+import com.example.composetree.feature.tree.presentation.TreeScreenStoreFactory.Action.InsertNode
 import com.example.composetree.feature.tree.presentation.TreeScreenStoreFactory.Msg.LoadNodeFailed
 import com.example.composetree.feature.tree.presentation.TreeScreenStoreFactory.Msg.NodeContentUpdated
 import kotlinx.coroutines.Job
@@ -37,6 +43,7 @@ internal class TreeScreenStoreFactory(
     private val loadNodeUseCase: LoadNodeUseCase,
     private val insertNodeUseCase: InsertNodeUseCase,
     private val deleteNodeUseCase: DeleteNodeUseCase,
+    private val nodeNameProvider: NodeNameProvider,
 ) {
     fun create(
         nodeName: EthereumAddress,
@@ -46,13 +53,13 @@ internal class TreeScreenStoreFactory(
             initialState = InitialLoad(nodeName),
             bootstrapper = SimpleBootstrapper(Action.Init(nodeName)),
             reducer = ReducerImpl,
-            executorFactory = { ExecutorImpl(loadNodeUseCase, insertNodeUseCase, deleteNodeUseCase) },
+            executorFactory = { ExecutorImpl(loadNodeUseCase, insertNodeUseCase, deleteNodeUseCase, nodeNameProvider) },
         ) {
-
     }
 
     private sealed interface Action {
         data class Init(val nodeName: EthereumAddress) : Action
+        data class InsertNode(val parent: EthereumAddress, val name: EthereumAddress) : Action
     }
 
     private sealed interface Msg {
@@ -62,6 +69,9 @@ internal class TreeScreenStoreFactory(
             val errorMessage: SnackbarMessage,
             val exception: Throwable,
         ) : Msg
+
+        data class ShowInsertNodeDialog(val newName: EthereumAddress) : Msg
+        data object DismissInsertNodeDialog : Msg
     }
 
     private object ReducerImpl : Reducer<TreeScreenState, Msg> {
@@ -69,6 +79,7 @@ internal class TreeScreenStoreFactory(
             is InitialLoad -> when (msg) {
                 is NodeContentUpdated -> MainContent(node = msg.node, child = msg.child)
                 is LoadNodeFailed -> this
+                else -> error("Unexpected message $msg")
             }
 
             is MainContent -> when (msg) {
@@ -78,6 +89,13 @@ internal class TreeScreenStoreFactory(
                 )
 
                 is LoadNodeFailed -> this
+                is Msg.ShowInsertNodeDialog -> copy(
+                    insertNodeDialogState = InsertNodeDialogState(
+                        textFieldState = TextFieldState(initialText = msg.newName.toEthereumString()),
+                    ),
+                )
+
+                Msg.DismissInsertNodeDialog -> copy(insertNodeDialogState = null)
             }
         }
     }
@@ -86,11 +104,13 @@ internal class TreeScreenStoreFactory(
         private val loadNodeUseCase: LoadNodeUseCase,
         private val insertNodeUseCase: InsertNodeUseCase,
         private val deleteNodeUseCase: DeleteNodeUseCase,
+        private val nodeNameProvider: NodeNameProvider,
     ) : CoroutineExecutor<Intent, Action, TreeScreenState, Msg, Label>() {
         private var childNodesSubscription: Job = Job()
 
         override fun executeAction(action: Action) = when (action) {
             is Action.Init -> initialLoad(action.nodeName)
+            is InsertNode -> insertNode(action.parent, action.name)
         }
 
         override fun executeIntent(intent: Intent) =
@@ -98,23 +118,18 @@ internal class TreeScreenStoreFactory(
                 is NavigateToNode -> navigateToNode(intent.name)
                 NavigateBack -> navigateBack()
                 NavigateToRoot -> navigateToNode(ROOT_NODE_NAME)
+
                 is DeleteNode -> deleteNode(intent.name)
-                ShowAddNodeDialog -> {
+                ShowInsertNodeDialog -> {
                     scope.launch {
-                        val parent = state().nodeName
-                        insertNodeUseCase
-                            .insert(state().nodeName, null)
-                            .onSuccess { newNode -> publish(ScrollToNewNode(newNode.name)) }
-                            .onFailure { _: Throwable ->
-                                val errorMessage = SnackbarMessage(
-                                    R.string.failed_to_insert_node,
-                                    listOf(parent.toEthereumString()),
-                                )
-                                publish(errorMessage)
-                            }
+                        val suggestedName = nodeNameProvider.getName(state().nodeName)
+                        dispatch(Msg.ShowInsertNodeDialog(suggestedName))
                     }
                     Unit
                 }
+
+                Intent.DismissInsertNodeDialog -> dispatch(Msg.DismissInsertNodeDialog)
+                is ConfirmInsertNode -> confirmInsertNode(intent.parent, intent.name)
             }
 
         private fun initialLoad(nodeName: EthereumAddress) {
@@ -128,12 +143,46 @@ internal class TreeScreenStoreFactory(
                             dispatch(
                                 LoadNodeFailed(
                                     nodeName = nodeName,
-                                    errorMessage = SnackbarMessage(R.string.initial_load_failed),
+                                    errorMessage = SnackbarMessage(R.string.snackbar_msg_initial_load_failed),
                                     exception = exception,
                                 ),
                             )
                         },
                     )
+            }
+        }
+
+        private fun confirmInsertNode(
+            parent: EthereumAddress,
+            name: String,
+        ) {
+            val newAddress = try {
+                name.toEthereumAddress()
+            } catch (iae: IllegalArgumentException) {
+                val errorMessage = SnackbarMessage(R.string.snackbar_msg_node_name_is_not_valid)
+                publish(errorMessage)
+                return
+            }
+
+            dispatch(Msg.DismissInsertNodeDialog)
+            forward(Action.InsertNode(parent, newAddress))
+        }
+
+        private fun insertNode(
+            parent: EthereumAddress,
+            name: EthereumAddress? = null,
+        ) {
+            scope.launch {
+                insertNodeUseCase
+                    .insert(parent, name)
+                    .onSuccess { newNode -> publish(ScrollToNewNode(newNode.name)) }
+                    .onFailure { _: Throwable ->
+                        val errorMessage = SnackbarMessage(
+                            R.string.snackbar_msg_failed_to_insert_node,
+                            listOf(parent.toEthereumString()),
+                        )
+                        publish(errorMessage)
+                    }
             }
         }
 
@@ -146,14 +195,14 @@ internal class TreeScreenStoreFactory(
                             if (name == node?.name) {
                                 navigateToNode(node.name)
                             }
-                            val statusMessage = SnackbarMessage(R.string.node_removed, listOf(name))
+                            val statusMessage = SnackbarMessage(R.string.snackbar_msg_node_removed, listOf(name))
                             publish(statusMessage)
                         },
                         onFailure = { exception: Throwable ->
                             dispatch(
                                 LoadNodeFailed(
                                     nodeName = name,
-                                    errorMessage = SnackbarMessage(R.string.failed_to_delete_node),
+                                    errorMessage = SnackbarMessage(R.string.snackbar_msg_failed_to_delete_node),
                                     exception = exception,
                                 ),
                             )

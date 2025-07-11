@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.Absolute.spacedBy
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -42,7 +43,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,8 +55,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.composetree.R
 import com.example.composetree.core.model.EthereumAddress
+import com.example.composetree.core.model.Node
 import com.example.composetree.core.model.ROOT_NODE
-import com.example.composetree.core.model.ROOT_NODE_NAME
 import com.example.composetree.core.model.isRoot
 import com.example.composetree.core.model.toEthereumAddress
 import com.example.composetree.core.ui.theme.ComposeTreeTheme
@@ -124,7 +124,7 @@ internal fun NodeTreeScaffold(
                     content = {
                         Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_node))
                     },
-                    onClick = { onIntent(Intent.ShowAddNodeDialog) },
+                    onClick = { onIntent(Intent.ShowInsertNodeDialog) },
                 )
             }
         },
@@ -151,9 +151,37 @@ private fun horizontalInsets(): WindowInsets = WindowInsets.systemGestures
     .only(WindowInsetsSides.Horizontal)
     .union(WindowInsets(left = 16.dp, right = 16.dp))
 
+
 @Composable
 internal fun NodeTreeMainContent(
     state: TreeScreenState.MainContent,
+    labels: Flow<Label>,
+    onIntent: (Intent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+    ) {
+        NodeTreeNodesContent(
+            node = state.node,
+            child = state.child,
+            labels = labels,
+            onIntent = onIntent,
+        )
+        if (state.insertNodeDialogState != null) {
+            InsertNodeDialog(
+                parentNodeName = state.nodeName,
+                state = state.insertNodeDialogState,
+                onIntent = onIntent,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun NodeTreeNodesContent(
+    node: Node,
+    child: List<EthereumAddress>,
     labels: Flow<Label>,
     onIntent: (Intent) -> Unit,
     modifier: Modifier = Modifier,
@@ -170,7 +198,7 @@ internal fun NodeTreeMainContent(
             )
             SelectionContainer {
                 Text(
-                    text = state.node.name.toEthereumString(),
+                    text = node.name.toEthereumString(),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 8.dp),
                 )
@@ -182,7 +210,7 @@ internal fun NodeTreeMainContent(
             )
         }
 
-        if (state.child.isEmpty()) {
+        if (child.isEmpty()) {
             Text(
                 text = stringResource(R.string.child_node_list_is_empty),
                 modifier = Modifier
@@ -193,7 +221,7 @@ internal fun NodeTreeMainContent(
             )
         } else {
             ChildNodes(
-                nodes = state.child,
+                nodes = child,
                 scrollLabels = labels.filterIsInstance<ScrollToNewNode>(),
                 onIntent = onIntent,
             )
@@ -220,7 +248,9 @@ private fun ChildNodes(
     }
 
     LazyColumn(
-        modifier = modifier.fillMaxSize().padding(top = 8.dp),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(top = 8.dp),
         contentPadding = WindowInsets.safeContent
             .only(WindowInsetsSides.Bottom)
             .asPaddingValues(),
@@ -251,12 +281,7 @@ fun ChildNodeListItem(
     onRemove: (EthereumAddress) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val swipeToDismissBoxState = rememberSwipeToDismissBoxState(
-        confirmValueChange = {
-            if (it == EndToStart) onRemove(name)
-            it == EndToStart
-        },
-    )
+    val swipeToDismissBoxState = rememberSwipeToDismissBoxState()
 
     SwipeToDismissBox(
         state = swipeToDismissBoxState,
@@ -276,14 +301,22 @@ fun ChildNodeListItem(
                         tint = Color.White,
                     )
                 }
+
                 else -> {}
+            }
+        },
+        onDismiss = { direction ->
+            if (direction == EndToStart) {
+                onRemove(name)
+            } else {
+                swipeToDismissBoxState.reset()
             }
         },
     ) {
         OutlinedCard(
             modifier = Modifier
                 .clickable(enabled = enabled, onClick = { onClick(name) })
-                .windowInsetsPadding(horizontalInsets())
+                .windowInsetsPadding(horizontalInsets()),
         ) {
             ListItem(
                 headlineContent = {
@@ -296,14 +329,6 @@ fun ChildNodeListItem(
             )
         }
     }
-}
-
-@Composable
-@ReadOnlyComposable
-private fun EthereumAddress.localizedText(): String = if (this == ROOT_NODE_NAME) {
-    stringResource(R.string.root_node_app_bar_title)
-} else {
-    this.toEthereumString()
 }
 
 @Preview(showBackground = true)

@@ -1,6 +1,7 @@
 package com.example.composetree.feature.tree.presentation
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.text.input.TextFieldState
 import com.arkivanov.mvikotlin.core.store.Store
 import com.example.composetree.core.model.EthereumAddress
 import com.example.composetree.core.model.Node
@@ -18,17 +19,23 @@ internal interface TreeScreenStore : Store<Intent, TreeScreenState, Label> {
         data class MainContent(
             val node: Node,
             val child: List<EthereumAddress>,
+            val insertNodeDialogState: InsertNodeDialogState? = null,
         ) : TreeScreenState {
             override val nodeName: EthereumAddress get() = node.name
         }
+
+        data class InsertNodeDialogState(
+            val textFieldState: TextFieldState = TextFieldState()
+        )
     }
 
     sealed class Intent  {
         data class NavigateToNode(val name: EthereumAddress) : Intent()
         data object NavigateToRoot: Intent()
         data object NavigateBack: Intent()
-        //data class AddNode(val parent: EthereumAddress, val name: EthereumAddress) : Intent()
-        data object ShowAddNodeDialog : Intent()
+        data object ShowInsertNodeDialog : Intent()
+        data object DismissInsertNodeDialog : Intent()
+        data class ConfirmInsertNode(val parent: EthereumAddress, val name: String) : Intent()
         data class DeleteNode(val name: EthereumAddress) : Intent()
     }
 
