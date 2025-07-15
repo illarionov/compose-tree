@@ -40,8 +40,8 @@ class NodeRepositoryImpl @Inject constructor(
     override fun getChildNodes(name: EthereumAddress): Flow<List<EthereumAddress>> {
         val dbName = if (name != ROOT_NODE_NAME) name else null
         return nodeDao.getChildNodes(dbName)
-            .flowOn(computationDispatcherContext)
             .map { list: List<NodeEntity> -> list.map(NodeEntity::name) }
+            .flowOn(computationDispatcherContext)
     }
 
     override suspend fun insertNode(node: Node) {
