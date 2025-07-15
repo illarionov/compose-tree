@@ -24,7 +24,11 @@ public class InsertNodeUseCaseImpl @Inject constructor(
 ) : InsertNodeUseCase {
     override suspend fun insert(parent: EthereumAddress, name: EthereumAddress?): Result<Node> {
         val newName = name ?: nodeNameProvider.getName(parent)
-        val node = Node(newName, parent)
+        val node = try {
+            Node(newName, parent)
+        } catch (iae: IllegalArgumentException) {
+            return Result.failure(NodeRepositoryException("Invalid node address"))
+        }
         return try {
             nodeRespository.insertNode(node)
             Result.success(node)
