@@ -2,6 +2,8 @@
 
 Какой-то тестовый проект — не обращайте внимания.
 
+Статус: собес, затем отказ (без обратной связи)
+
 ## Стек
 
 Kotlin, Compose Coroutines, MVI (MVIKotlin), Room, SQLite, Hilt, Architecture Component (ViewModel), Clean Architecture…
